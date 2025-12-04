@@ -2,9 +2,20 @@ import streamlit as st
 import requests
 from PIL import Image
 from io import BytesIO
+import os
 
 # --- Sayfa Ayarları ---
 st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="👕")
+
+# --- SOL MENÜ (API ANAHTARI) ---
+with st.sidebar:
+    st.header("🔑 Anahtar Girişi")
+    st.info("Sistemin çalışması için Replicate API anahtarınızı girin.")
+    api_key = st.text_input("Replicate API Token", type="password", placeholder="r8_... ile başlayan kod")
+
+    if api_key:
+        os.environ["REPLICATE_API_TOKEN"] = api_key
+        st.success("Anahtar kaydedildi! ✅")
 
 # --- Logo Kısmı ---
 try:
@@ -46,14 +57,41 @@ if urun_linki:
 st.markdown("---")
 
 if st.button("SANAL DENEMEYİ BAŞLAT", type="primary"):
-    # KONTROL: Hem insan fotosu hem ürün fotosu var mı?
-    if human_file is not None and garm_img is not None:
-        st.balloons()
-        st.success("Yapay zeka motoru çalışıyor... (Sistem şu an tam hazır!)")
+    # 1. Kontrol: API Anahtarı girilmiş mi?
+    if not api_key:
+        st.error("Lütfen önce sol menüden API anahtarınızı girin!")
+        st.stop()
         
-        # Buraya ileride Replicate API kodu gelecek
-        # human_file -> Müşteri fotosu
-        # urun_linki -> Kıyafet linki
+    # 2. Kontrol: Dosyalar tamam mı?
+    if human_file is not None and garm_img is not None and urun_linki:
+        st.info("⏳ Yapay zeka motoru çalışıyor... Bu işlem 15-30 saniye sürebilir. Lütfen bekleyin.")
+        
+        try:
+            # Replicate kütüphanesini burada çağırıyoruz
+            import replicate
+            
+            # --- MOTOR BURADA ÇALIŞIYOR ---
+            output = replicate.run(
+                "cuuupid/idm-vton:c871bb9b046607400f7e0472a2441966250652885738466665097774130204c8",
+                input={
+                    "human_img": human_file, # Senin yüklediğin dosya
+                    "garm_img": urun_linki,  # Senin yapıştırdığın link
+                    "category": "upper_body", # Varsayılan olarak üst giyim
+                    "garment_des": "clothing item"
+                }
+            )
+            
+            # --- SONUÇ GELDİ ---
+            st.balloons()
+            st.success("İşlem Başarılı! 🎉")
+            
+            # Yeni oluşan fotoğrafı göster
+            st.image(output, caption="Sanal Deneme Sonucu", use_column_width=True)
+            
+        except ImportError:
+            st.error("HATA: 'replicate' kütüphanesi yüklü değil. Terminale 'pip install replicate' yazmalısın.")
+        except Exception as e:
+            st.error(f"Bir hata oluştu: {e}")
         
     else:
         if human_file is None:
