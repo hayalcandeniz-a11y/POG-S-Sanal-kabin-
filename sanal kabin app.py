@@ -5,6 +5,7 @@ from PIL import Image
 from io import BytesIO
 
 # --- 1. AYARLAR ---
+# DİKKAT: Sayfa başlığı bu komutla ayarlanır. Asla <title> yazma.
 st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="🍌", layout="wide")
 
 # --- Logo Kısmı ---
@@ -15,13 +16,12 @@ except:
 
 st.title("Sanal Kabin (Nano Modu 🍌)")
 
-# --- 2. DOSYA KONTROLÜ (YENİ ÖZELLİK) ---
-# Burada requirements.txt dosyasının varlığını kontrol ediyoruz.
+# --- 2. DOSYA KONTROLÜ ---
+# requirements.txt var mı yok mu kontrol ediyoruz
 if not os.path.exists("requirements.txt"):
     st.error("🚨 HATA: 'requirements.txt' dosyası bulunamadı!")
     st.info("Lütfen sol menüden yeni bir dosya oluşturup adını 'requirements.txt' yapın ve içine gerekli kütüphaneleri yazın.")
-else:
-    st.success("✅ Sistem dosyaları doğrulandı! Fotoğraf yükleyip başlayabilirsiniz.")
+    st.stop() # Dosya yoksa dur.
 
 # --- 3. SAYFA DÜZENİ ---
 col1, col2 = st.columns(2)
@@ -40,7 +40,7 @@ with col1:
         with open("temp_human.jpg", "wb") as f:
             f.write(human_file.getbuffer())
         human_img_path = "temp_human.jpg"
-        st.info("✅ Fotoğraf yüklendi.")
+        st.success("✅ Fotoğraf yüklendi.")
 
 # --- SAĞ SÜTUN: ÜRÜN LİNKİ ---
 with col2:
@@ -60,7 +60,7 @@ with col2:
             garm_img_path = "temp_garm.jpg"
             
             st.image(garm_img_display, caption="Seçilen Ürün", width=300)
-            st.info("✅ Ürün seçildi.")
+            st.success("✅ Ürün seçildi.")
 
         except Exception as e:
             st.error("Resim yüklenemedi. Linkin doğrudan bir resim dosyası olduğundan emin ol.")
@@ -74,12 +74,12 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
         st.error("❌ Lütfen önce fotoğrafını yükle ve geçerli bir ürün linki gir.")
         st.stop()
     
-    # --- MOTOR KONTROLÜ (Burada yapıyoruz ki sayfa açabilsin) ---
+    # --- MOTOR KONTROLÜ ---
     try:
         from gradio_client import Client, handle_file
     except ImportError:
         st.error("🚨 HATA: Motor parçaları eksik!")
-        st.warning("Lütfen 'requirements.txt' dosyasını oluşturup içine 'gradio_client' yazdığından emin ol ve uygulamayı REBOOT et.")
+        st.warning("Motorun çalışması için 'requirements.txt' dosyasına 'gradio_client' yazıp kaydetmen ve Reboot yapman gerekiyor.")
         st.stop()
 
     st.info("🍌 Nano Banana Motoru çalışıyor... (Ücretsiz sunucu olduğu için 40-60 saniye sürebilir, lütfen bekle...)")
