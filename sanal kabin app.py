@@ -14,9 +14,16 @@ except:
     st.header("POG'S")
 
 st.title("Sanal Kabin (Nano Modu 🍌)")
-st.info("Sistem hazır! Fotoğrafını yükle ve denemeye başla.")
 
-# --- 2. SAYFA DÜZENİ ---
+# --- 2. DOSYA KONTROLÜ (YENİ ÖZELLİK) ---
+# Burada requirements.txt dosyasının varlığını kontrol ediyoruz.
+if not os.path.exists("requirements.txt"):
+    st.error("🚨 HATA: 'requirements.txt' dosyası bulunamadı!")
+    st.info("Lütfen sol menüden yeni bir dosya oluşturup adını 'requirements.txt' yapın ve içine gerekli kütüphaneleri yazın.")
+else:
+    st.success("✅ Sistem dosyaları doğrulandı! Fotoğraf yükleyip başlayabilirsiniz.")
+
+# --- 3. SAYFA DÜZENİ ---
 col1, col2 = st.columns(2)
 
 garm_img_path = None
@@ -33,7 +40,7 @@ with col1:
         with open("temp_human.jpg", "wb") as f:
             f.write(human_file.getbuffer())
         human_img_path = "temp_human.jpg"
-        st.success("✅ Fotoğraf tamam.")
+        st.info("✅ Fotoğraf yüklendi.")
 
 # --- SAĞ SÜTUN: ÜRÜN LİNKİ ---
 with col2:
@@ -53,12 +60,12 @@ with col2:
             garm_img_path = "temp_garm.jpg"
             
             st.image(garm_img_display, caption="Seçilen Ürün", width=300)
-            st.success("✅ Ürün tamam.")
+            st.info("✅ Ürün seçildi.")
 
         except Exception as e:
             st.error("Resim yüklenemedi. Linkin doğrudan bir resim dosyası olduğundan emin ol.")
 
-# --- 3. BAŞLATMA BUTONU ---
+# --- 4. BAŞLATMA BUTONU ---
 st.markdown("---")
 if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=True):
     
@@ -75,7 +82,7 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
         st.warning("Lütfen 'requirements.txt' dosyasını oluşturup içine 'gradio_client' yazdığından emin ol ve uygulamayı REBOOT et.")
         st.stop()
 
-    st.warning("🍌 Nano Banana Motoru çalışıyor... (Ücretsiz sunucu olduğu için 40-60 saniye sürebilir, lütfen bekle...)")
+    st.info("🍌 Nano Banana Motoru çalışıyor... (Ücretsiz sunucu olduğu için 40-60 saniye sürebilir, lütfen bekle...)")
     
     try:
         # ÜCRETSİZ API BAĞLANTISI
@@ -101,4 +108,4 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
 
     except Exception as e:
         st.error(f"Bir hata oluştu: {e}")
-        st.info("Sunucu yoğun olabilir, birazdan tekrar dene.")
+        st.warning("Sunucu yoğun olabilir, birazdan tekrar dene.")
