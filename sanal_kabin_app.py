@@ -8,39 +8,34 @@ from io import BytesIO
 # Bu komut her zaman en başta olmalıdır.
 st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="🍌", layout="wide")
 
-# --- 2. MOTOR KONTROLÜ ---
-# Burada sistemin çalışması için gereken kütüphaneleri kontrol ediyoruz.
-try:
-    from gradio_client import Client, handle_file
-except ImportError:
-    st.error("🚨 HATA: Motor (gradio_client) bulunamadı!")
-    
-    st.info("🛠️ ÇÖZÜM: 'requirements.txt' Dosyası Eksik")
-    st.markdown("""
-    Bu hatayı çözmek için:
-    1. Sol menüden **'New File'** butonuna bas.
-    2. Dosya adını `requirements.txt` yap.
-    3. İçine şu 4 satırı yapıştır:
-    """)
-    
-    st.code("""streamlit
-requests
-Pillow
-gradio_client""", language="text")
-    
-    st.markdown("""
-    4. Dosyayı kaydet ve sağ alttan **'Reboot App'** yap.
-    """)
-    st.stop()
-
-# --- Logo Kısmı ---
-try:
-    st.image("logo.svg", width=200)
-except:
-    st.header("POG'S")
+# --- 2. DOKTOR MODU (HATA AYIKLAMA) ---
+# Burası sistemin neden çalışmadığını tespit eder.
 
 st.title("Sanal Kabin (Nano Modu 🍌)")
-st.success("✅ Sistem başarıyla açıldı! Hazır.")
+
+# ADIM A: requirements.txt var mı?
+if not os.path.exists("requirements.txt"):
+    st.error("🚨 HATA 1: 'requirements.txt' dosyası hiç yok!")
+    st.info("ÇÖZÜM: Sol menüden 'New File' diyerek bu isimde bir dosya oluşturman şart.")
+    st.stop()
+
+# ADIM B: requirements.txt'nin içi doğru mu?
+with open("requirements.txt", "r") as f:
+    dosya_icerigi = f.read()
+    if "gradio_client" not in dosya_icerigi:
+        st.error("🚨 HATA 2: Dosya var ama içinde 'gradio_client' yazmıyor!")
+        st.warning(f"Dosyanın şu anki içeriği şöyle görünüyor:\n{dosya_icerigi}")
+        st.info("ÇÖZÜM: Dosyanın içini sil ve sadece gerekli 4 satırı yapıştır.")
+        st.stop()
+
+# ADIM C: Motor yüklü mü?
+try:
+    from gradio_client import Client, handle_file
+    st.success("✅ Motor başarıyla yüklendi! Sistem çalışıyor.")
+except ImportError:
+    st.error("🚨 HATA 3: Dosyalar tamam ama motor henüz yüklenmedi!")
+    st.info("ÇÖZÜM: Sağ alt köşedeki 'Manage App' menüsünden 'Reboot App' (Yeniden Başlat) yapmalısın. Reboot yapmadan değişiklikler geçerli olmaz.")
+    st.stop()
 
 # --- 3. SAYFA DÜZENİ ---
 col1, col2 = st.columns(2)
