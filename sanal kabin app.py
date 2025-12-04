@@ -1,23 +1,31 @@
 import streamlit as st
-import requests
-from PIL import Image
-from io import BytesIO
 import os
+import sys
+import subprocess
 
 # --- 1. AYARLAR ---
 st.set_page_config(page_title="POG'S Sanal Kabin (Ücretsiz)", page_icon="🍌", layout="wide")
 
-# --- 2. MOTOR KONTROLÜ (Hata Önleyici) ---
+# --- 2. OTOMATİK TAMİR SİSTEMİ (Self-Install) ---
+def install_library():
+    try:
+        st.info("🛠️ Motor (gradio_client) yükleniyor... Lütfen bekleyin.")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "gradio_client==1.3.0"])
+        st.success("✅ Motor başarıyla yüklendi! Sayfa yenileniyor...")
+        st.rerun() # Sayfayı yenile
+    except Exception as e:
+        st.error(f"Otomatik yükleme başarısız oldu: {e}")
+        st.stop()
+
 try:
     from gradio_client import Client, handle_file
 except ImportError:
-    st.error("🚨 HATA: Motor (kütüphane) eksik!")
-    st.info("""
-    ÇÖZÜM:
-    1. 'requirements.txt' dosyana 'gradio_client' yazdığından emin ol.
-    2. Sağ alttan 'Manage App' -> 'Reboot App' yap.
-    """)
-    st.stop()
+    # Eğer kütüphane yoksa, durmak yerine yüklemeyi dene
+    install_library()
+
+import requests
+from PIL import Image
+from io import BytesIO
 
 # --- Logo Kısmı ---
 try:
