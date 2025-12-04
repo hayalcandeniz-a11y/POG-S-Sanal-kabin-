@@ -7,15 +7,18 @@ from io import BytesIO
 # --- 1. AYARLAR ---
 st.set_page_config(page_title="POG'S Sanal Kabin (Ücretsiz)", page_icon="🍌", layout="wide")
 
-# --- 2. MOTOR KONTROLÜ (Manuel Kontrol) ---
+# --- 2. MOTOR KONTROLÜ ---
+# Burada sistemin çalışması için gereken motoru kontrol ediyoruz.
 try:
     from gradio_client import Client, handle_file
 except ImportError:
     st.error("🚨 HATA: Motor (kütüphane) eksik!")
     st.warning("""
-    Bu hatayı çözmek için:
-    1. Projende 'requirements.txt' adında bir dosya oluştur.
-    2. İçine 'gradio_client' yazıp kaydet.
+    Bu hatayı görüyorsan, 'requirements.txt' dosyan eksik veya okunmadı demektir.
+    
+    ÇÖZÜM:
+    1. Projende 'requirements.txt' adında bir dosya olduğundan emin ol.
+    2. İçinde 'gradio_client' yazdığından emin ol.
     3. Sağ alttaki 'Manage App' menüsünden 'Reboot App' yap.
     """)
     st.stop()
@@ -69,12 +72,13 @@ with col2:
             st.success("✅ Ürün hazır.")
 
         except Exception as e:
-            st.error("Resim yüklenemedi. Direkt resim linki olduğundan emin ol.")
+            st.error("Resim yüklenemedi. Linkin doğrudan bir resim dosyası olduğundan emin ol.")
 
 # --- 4. BAŞLATMA BUTONU ---
 st.markdown("---")
 if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=True):
     
+    # Dosya Kontrolü
     if not human_img_path or not garm_img_path:
         st.error("❌ Lütfen önce fotoğrafını yükle ve geçerli bir ürün linki gir.")
         st.stop()
