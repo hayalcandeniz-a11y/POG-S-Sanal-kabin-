@@ -4,13 +4,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-# --- 1. AYARLAR ---
-# Sayfa yapılandırması (Bu komut her zaman en başta olmalıdır)
-st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="🍌", layout="wide")
 
-# --- 2. DOKTOR MODU (KONTROLLER) ---
-
-# ADIM A: requirements.txt kontrolü
 if not os.path.exists("requirements.txt"):
     st.error("🚨 HATA 1: 'requirements.txt' dosyası bulunamadı!")
     st.info("ÇÖZÜM: Sol menüden 'New File' diyerek bu isimde bir dosya oluşturmalısın.")
@@ -25,7 +19,6 @@ with open("requirements.txt", "r") as f:
         st.info("ÇÖZÜM: Dosyaya 'gradio_client' satırını eklemelisin.")
         st.stop()
 
-# ADIM C: Motor (Gradio Client) Yükleme
 try:
     from gradio_client import Client, handle_file
     st.success("✅ Motor başarıyla yüklendi! Sistem hazır.")
@@ -34,13 +27,11 @@ except ImportError:
     st.info("ÇÖZÜM: Sağ alt köşedeki 'Manage App' menüsünden 'Reboot App' butonuna basarak uygulamayı yeniden başlat.")
     st.stop()
 
-# --- 3. SAYFA DÜZENİ ---
 col1, col2 = st.columns(2)
 
 garm_img_path = None
 human_img_path = None
 
-# --- SOL SÜTUN: MÜŞTERİ FOTOĞRAFI ---
 with col1:
     st.subheader("1. Adım: Senin Fotoğrafın")
     human_file = st.file_uploader("Boydan bir fotoğrafını yükle", type=['png', 'jpg', 'jpeg'])
@@ -53,7 +44,6 @@ with col1:
         human_img_path = "temp_human.jpg"
         st.info("✅ Fotoğraf alındı.")
 
-# --- SAĞ SÜTUN: ÜRÜN LİNKİ ---
 with col2:
     st.subheader("2. Adım: Ürün Linki")
     st.info("💡 İpucu: Ürün resminin linkini yapıştır (.jpg veya .png ile biten).")
@@ -74,7 +64,6 @@ with col2:
         except Exception as e:
             st.error(f"Resim yüklenirken hata oluştu: {e}")
 
-# --- 4. BAŞLATMA BUTONU ---
 st.markdown("---")
 if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=True):
     
@@ -102,7 +91,6 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
             api_name="/tryon"
         )
         
-        # Sonuç genellikle bir liste veya tuple döner, ilk elemanı dosya yoludur
         sonuc_resim_yolu = result[0]
         
         st.balloons()
