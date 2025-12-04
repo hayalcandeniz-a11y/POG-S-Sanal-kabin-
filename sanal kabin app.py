@@ -1,116 +1,107 @@
-import streamlit as st  # Web sitesini oluşturan araç (Biz ona 'st' diyeceğiz)
-import os               # Bilgisayarın dosya sistemine erişen araç
-import sys              # Sistem ayarları için araç
+import streamlit as st
+import requests
+from PIL import Image
+from io import BytesIO
+import os
 
-# --- 1. AYARLAR (Sitenin Kimliği) ---
-# Sayfanın sekme adını ve ikonunu (muz) ayarlıyoruz.
-st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="🍌", layout="wide")
+# --- 1. AYARLAR ---
+st.set_page_config(page_title="POG'S Sanal Kabin (Ücretsiz)", page_icon="🍌", layout="wide")
 
-st.title("Sanal Kabin (Nano Modu 🍌)")
-
-# --- 2. MOTOR KONTROLÜ (Güvenlik Önlemi) ---
-# Burada "Arabanın motoru (gradio_client) takılı mı?" diye bakıyoruz.
+# --- 2. MOTOR KONTROLÜ (Hata Önleyici) ---
 try:
-    import requests                           # İnternetten resim indirmek için
-    from PIL import Image                     # Resimleri işlemek (açmak/kaydetmek) için
-    from io import BytesIO                    # Resim verisini hafızada tutmak için
-    from gradio_client import Client, handle_file # Yapay zeka ile konuşacak olan asıl motor
-except ImportError as hata_mesaji:
-    # Eğer motor yoksa, çalışmayı durdur ve kullanıcıya ne yapması gerektiğini söyle.
-    st.error("🚨 KRİTİK HATA: Bir kütüphane eksik!")
-    st.code(f"Hata detayı: {hata_mesaji}")
-    st.warning("""
+    from gradio_client import Client, handle_file
+except ImportError:
+    st.error("🚨 HATA: Motor (kütüphane) eksik!")
+    st.info("""
     ÇÖZÜM:
-    1. 'requirements.txt' dosyasını kontrol et (içinde gradio_client var mı?).
-    2. Sağ alttan 'Manage App' -> 'Reboot App' yaparak sistemi yeniden başlat.
+    1. 'requirements.txt' dosyana 'gradio_client' yazdığından emin ol.
+    2. Sağ alttan 'Manage App' -> 'Reboot App' yap.
     """)
-    st.stop() # Kodun geri kalanını çalıştırma, burada dur.
+    st.stop()
 
 # --- Logo Kısmı ---
-# Logo varsa göster, yoksa sadece yazı yaz.
 try:
     st.image("logo.svg", width=200)
 except:
     st.header("POG'S")
 
-st.write("Bu sürüm ücretsiz HuggingFace altyapısını kullanır.")
+st.title("Sanal Kabin (Nano Modu 🍌)")
+st.write("Bu sürüm tamamen ücretsizdir! HuggingFace altyapısını kullanır.")
 
-# --- 3. SAYFA DÜZENİ (İki Sütun) ---
-# Sayfayı ikiye bölüyoruz: Sol Sütun (col1) ve Sağ Sütun (col2)
+# --- 3. SAYFA DÜZENİ ---
 col1, col2 = st.columns(2)
 
-# Bu değişkenler (kutular) başlangıçta boş, içlerini aşağıda dolduracağız.
-kiyafet_resim_yolu = None
-insan_resim_yolu = None
-yuklenen_insan_dosyasi = None
+garm_img_path = None
+human_img_path = None
 
-# --- SOL SÜTUN: İnsan Fotoğrafı ---
+# --- SOL SÜTUN: MÜŞTERİ FOTOĞRAFI ---
 with col1:
-    st.subheader("1. Adım: Fotoğrafın")
-    # Kullanıcıdan dosya yüklemesini iste
-    yuklenen_insan_dosyasi = st.file_uploader("Fotoğrafını Yükle", type=['png', 'jpg', 'jpeg'])
+    st.subheader("1. Adım: Senin Fotoğrafın")
+    human_file = st.file_uploader("Boydan bir fotoğrafını yükle", type=['png', 'jpg', 'jpeg'])
     
-    if yuklenen_insan_dosyasi:
-        # Fotoğraf yüklendiyse ekranda göster
-        st.image(yuklenen_insan_dosyasi, width=300)
-        
-        # Bu dosyayı yapay zekaya gönderebilmek için geçici olarak kaydediyoruz
-        with open("gecici_insan.jpg", "wb") as dosya:
-            dosya.write(yuklenen_insan_dosyasi.getbuffer())
-        insan_resim_yolu = "gecici_insan.jpg"
+    if human_file:
+        st.image(human_file, caption="Müşteri Fotoğrafı", width=300)
+        # Dosyayı geçici olarak kaydet
+        with open("temp_human.jpg", "wb") as f:
+            f.write(human_file.getbuffer())
+        human_img_path = "temp_human.jpg"
+        st.success("✅ Fotoğraf hazır.")
 
-# --- SAĞ SÜTUN: Kıyafet Linki ---
+# --- SAĞ SÜTUN: ÜRÜN LİNKİ ---
 with col2:
     st.subheader("2. Adım: Ürün Linki")
-    # Kullanıcıdan link iste
-    girilen_link = st.text_input("Link Yapıştır")
-    
+    st.info("💡 İpucu: Ürün resminin linkini yapıştır (.jpg veya .png ile biten).")
+    girilen_link = st.text_input("Ürün Resim Linki")
+
     if girilen_link:
         try:
-            # İnternetten (requests) o linkteki resmi çekmeye çalış
-            cevap = requests.get(girilen_link, headers={'User-Agent': 'Mozilla/5.0'})
-            resim = Image.open(BytesIO(cevap.content))
+            # Linkten resmi indir
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            response = requests.get(girilen_link, headers=headers)
+            garm_img_display = Image.open(BytesIO(response.content))
             
-            # Resmi yine geçici olarak kaydediyoruz
-            resim.save("gecici_kiyafet.jpg")
-            kiyafet_resim_yolu = "gecici_kiyafet.jpg"
+            # Dosyayı geçici olarak kaydet
+            garm_img_display.save("temp_garm.jpg")
+            garm_img_path = "temp_garm.jpg"
             
-            # Resmi ekranda göster
-            st.image(resim, width=300)
-        except:
-            st.error("Resim açılmadı. Linkin doğruluğunu kontrol et.")
+            st.image(garm_img_display, caption="Seçilen Ürün", width=300)
+            st.success("✅ Ürün hazır.")
 
-# --- 4. İŞLEM BUTONU ---
-st.markdown("---") # Araya bir çizgi çek
+        except Exception as e:
+            st.error("Resim yüklenemedi. Direkt resim linki olduğundan emin ol.")
 
-if st.button("DENEMEYİ BAŞLAT", type="primary"):
-    # Önce kontrol: İki resim de elimizde mi?
-    if not insan_resim_yolu or not kiyafet_resim_yolu:
-        st.error("Lütfen önce fotoğrafını yükle ve bir ürün linki yapıştır.")
-    else:
-        st.info("🍌 İşlem başlıyor... (Sunucu yoğunluğuna göre 40-60 saniye sürebilir)")
+# --- 4. BAŞLATMA BUTONU ---
+st.markdown("---")
+if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=True):
+    
+    if not human_img_path or not garm_img_path:
+        st.error("❌ Lütfen önce fotoğrafını yükle ve geçerli bir ürün linki gir.")
+        st.stop()
+
+    st.info("🍌 Nano Banana Motoru çalışıyor... (Ücretsiz sunucu olduğu için 40-60 saniye sürebilir, lütfen bekle...)")
+    
+    try:
+        # ÜCRETSİZ API BAĞLANTISI
+        client = Client("yisol/IDM-VTON")
         
-        try:
-            # --- YAPAY ZEKA BAĞLANTISI ---
-            # HuggingFace üzerindeki 'yisol/IDM-VTON' adlı motora bağlanıyoruz
-            istemci = Client("yisol/IDM-VTON")
-            
-            # Motora emri veriyoruz (Predict = Tahmin Et / Yap)
-            sonuc = istemci.predict(
-                dict={"background": handle_file(insan_resim_yolu), "layers": [], "composite": None},
-                garm_img=handle_file(kiyafet_resim_yolu), # Kıyafet resmi
-                garment_des="clothing",                   # Kıyafet tanımı
-                is_checked=True,                          # Otomatik kırpma var mı?
-                is_checked_crop=False,                    # Kırpma ayarı
-                denoise_steps=30,                         # Kalite adımı (30 iyidir)
-                seed=42,                                  # Rastgelelik tohumu (hep aynı sonuç için)
-                api_name="/tryon"                         # Fonksiyon adı
-            )
-            
-            # --- SONUÇ GELDİ ---
-            st.success("İşlem Başarılı! 🎉")
-            # Gelen sonucu (result[0]) ekrana basıyoruz
-            st.image(sonuc[0], caption="Sonuç", use_column_width=True)
-            
-        except Exception as hata:
-            st.error(f"Motor Hatası: {hata}")
+        # İşlemi Başlat
+        result = client.predict(
+            dict={"background": handle_file(human_img_path), "layers": [], "composite": None},
+            garm_img=handle_file(garm_img_path),
+            garment_des="clothing",
+            is_checked=True,
+            is_checked_crop=False,
+            denoise_steps=30,
+            seed=42,
+            api_name="/tryon"
+        )
+        
+        # Sonuç gösterimi
+        sonuc_resim_yolu = result[0]
+        st.balloons()
+        st.success("🎉 İŞTE SONUÇ!")
+        st.image(sonuc_resim_yolu, caption="Sanal Deneme Sonucu", use_column_width=True)
+
+    except Exception as e:
+        st.error(f"Bir hata oluştu: {e}")
+        st.warning("Sunucu yoğun olabilir, birazdan tekrar dene.")
