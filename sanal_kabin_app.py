@@ -5,36 +5,34 @@ from PIL import Image
 from io import BytesIO
 
 # --- 1. AYARLAR ---
-# Bu komut her zaman en başta olmalıdır.
+# Sayfa yapılandırması (Bu komut her zaman en başta olmalıdır)
 st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="🍌", layout="wide")
 
-# --- 2. DOKTOR MODU (HATA AYIKLAMA) ---
-# Burası sistemin neden çalışmadığını tespit eder.
-
+# --- 2. DOKTOR MODU (KONTROLLER) ---
 st.title("Sanal Kabin (Nano Modu 🍌)")
 
-# ADIM A: requirements.txt var mı?
+# ADIM A: requirements.txt kontrolü
 if not os.path.exists("requirements.txt"):
-    st.error("🚨 HATA 1: 'requirements.txt' dosyası hiç yok!")
-    st.info("ÇÖZÜM: Sol menüden 'New File' diyerek bu isimde bir dosya oluşturman şart.")
+    st.error("🚨 HATA 1: 'requirements.txt' dosyası bulunamadı!")
+    st.info("ÇÖZÜM: Sol menüden 'New File' diyerek bu isimde bir dosya oluşturmalısın.")
     st.stop()
 
-# ADIM B: requirements.txt'nin içi doğru mu?
+# ADIM B: requirements.txt içeriği kontrolü
 with open("requirements.txt", "r") as f:
     dosya_icerigi = f.read()
     if "gradio_client" not in dosya_icerigi:
-        st.error("🚨 HATA 2: Dosya var ama içinde 'gradio_client' yazmıyor!")
-        st.warning(f"Dosyanın şu anki içeriği şöyle görünüyor:\n{dosya_icerigi}")
-        st.info("ÇÖZÜM: Dosyanın içini sil ve sadece gerekli 4 satırı yapıştır.")
+        st.error("🚨 HATA 2: 'requirements.txt' dosyasında 'gradio_client' eksik!")
+        st.warning(f"Mevcut içerik:\n{dosya_icerigi}")
+        st.info("ÇÖZÜM: Dosyaya 'gradio_client' satırını eklemelisin.")
         st.stop()
 
-# ADIM C: Motor yüklü mü?
+# ADIM C: Motor (Gradio Client) Yükleme
 try:
     from gradio_client import Client, handle_file
-    st.success("✅ Motor başarıyla yüklendi! Sistem çalışıyor.")
+    st.success("✅ Motor başarıyla yüklendi! Sistem hazır.")
 except ImportError:
-    st.error("🚨 HATA 3: Dosyalar tamam ama motor henüz yüklenmedi!")
-    st.info("ÇÖZÜM: Sağ alt köşedeki 'Manage App' menüsünden 'Reboot App' (Yeniden Başlat) yapmalısın. Reboot yapmadan değişiklikler geçerli olmaz.")
+    st.error("🚨 HATA 3: Kütüphaneler yüklü değil veya motor başlatılamadı.")
+    st.info("ÇÖZÜM: Sağ alt köşedeki 'Manage App' menüsünden 'Reboot App' butonuna basarak uygulamayı yeniden başlat.")
     st.stop()
 
 # --- 3. SAYFA DÜZENİ ---
@@ -66,20 +64,23 @@ with col2:
         try:
             headers = {'User-Agent': 'Mozilla/5.0'}
             response = requests.get(girilen_link, headers=headers)
-            garm_img_display = Image.open(BytesIO(response.content))
-            garm_img_display.save("temp_garm.jpg")
-            garm_img_path = "temp_garm.jpg"
-            st.image(garm_img_display, caption="Seçilen Ürün", width=300)
-            st.info("✅ Ürün alındı.")
+            if response.status_code == 200:
+                garm_img_display = Image.open(BytesIO(response.content))
+                garm_img_display.save("temp_garm.jpg")
+                garm_img_path = "temp_garm.jpg"
+                st.image(garm_img_display, caption="Seçilen Ürün", width=300)
+                st.info("✅ Ürün alındı.")
+            else:
+                st.error("Resim indirilemedi. Bağlantıyı kontrol et.")
         except Exception as e:
-            st.error("Resim yüklenemedi. Linkin doğru olduğundan emin ol.")
+            st.error(f"Resim yüklenirken hata oluştu: {e}")
 
 # --- 4. BAŞLATMA BUTONU ---
 st.markdown("---")
 if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=True):
     
     if not human_img_path or not garm_img_path:
-        st.error("❌ Lütfen önce fotoğrafını yükle ve geçerli bir ürün linki gir.")
+        st.error("❌ Lütfen önce hem kendi fotoğrafını yükle hem de geçerli bir ürün linki gir.")
         st.stop()
 
     st.warning("🍌 Nano Banana Motoru çalışıyor... (40-60 saniye sürebilir, lütfen bekle...)")
@@ -88,6 +89,9 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
         # Hugging Face üzerindeki ücretsiz motoru kullanıyoruz
         client = Client("yisol/IDM-VTON")
         
+        # API çağrısı
+        # Not: 'dict' parametresi isimlendirilmiş argüman olarak gönderiliyor.
+        # Python keyword ile çakışsa da gradio_client bunu bekliyor olabilir.
         result = client.predict(
             dict={"background": handle_file(human_img_path), "layers": [], "composite": None},
             garm_img=handle_file(garm_img_path),
@@ -99,11 +103,13 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
             api_name="/tryon"
         )
         
+        # Sonuç genellikle bir liste veya tuple döner, ilk elemanı dosya yoludur
         sonuc_resim_yolu = result[0]
+        
         st.balloons()
         st.success("🎉 İŞTE SONUÇ!")
         st.image(sonuc_resim_yolu, caption="Sanal Deneme Sonucu", use_column_width=True)
 
     except Exception as e:
         st.error(f"Bir hata oluştu: {e}")
-        st.info("Sunucu yoğun olabilir, birazdan tekrar dene.")
+        st.info("Sunucu şu an çok yoğun olabilir veya API yanıt vermiyor olabilir. Lütfen 1-2 dakika sonra tekrar dene.")
