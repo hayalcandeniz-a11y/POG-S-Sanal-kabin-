@@ -13,9 +13,19 @@ except:
     st.header("POG'S")
 
 st.title("Sanal Kabin'e Hoşgeldiniz")
-st.write("Kendi fotoğrafını yükle ve ürünlerimizi üzerinde dene!")
+st.write("Aşağıdaki adımları takip ederek sanal deneme yapabilirsin.")
 
-# --- 1. Bölüm: Ürün Linki Alma ---
+# --- 1. ADIM: Kendi Fotoğrafını Yükle ---
+st.subheader("1. Adım: Kendi Fotoğrafın")
+human_file = st.file_uploader("Boydan çekilmiş bir fotoğrafını yükle", type=['png', 'jpg', 'jpeg'])
+
+if human_file is not None:
+    st.image(human_file, caption="Senin Fotoğrafın", width=200)
+    st.success("Fotoğrafın hazır!")
+
+# --- 2. ADIM: Ürün Linki Alma ---
+st.markdown("---")
+st.subheader("2. Adım: Denenecek Ürün")
 urun_linki = st.text_input("Ürün Resminin Linkini Buraya Yapıştır")
 
 garm_img = None # Başlangıçta boş olsun
@@ -28,17 +38,25 @@ if urun_linki:
         
         # Ekranda kullanıcıya doğru resmi seçtiğini gösterelim
         st.image(garm_img, caption="Seçilen Ürün", width=300)
-        st.success("Fotoğraf başarıyla alındı!")
+        st.success("Ürün fotoğrafı başarıyla alındı!")
     except:
         st.error("Bu linkte bir resim bulamadım. Linkin .jpg veya .png ile bittiğinden emin ol.")
 
-# --- 2. Bölüm: Deneme Butonu ---
+# --- 3. ADIM: Deneme Butonu ---
 st.markdown("---")
 
 if st.button("SANAL DENEMEYİ BAŞLAT", type="primary"):
-    # Burayı düzelttik: Artık 'uploaded_file' değil 'garm_img' kontrol ediliyor
-    if garm_img is not None:
+    # KONTROL: Hem insan fotosu hem ürün fotosu var mı?
+    if human_file is not None and garm_img is not None:
         st.balloons()
-        st.success("Yapay zeka motoru çalışıyor... (Sistem hazır!)")
+        st.success("Yapay zeka motoru çalışıyor... (Sistem şu an tam hazır!)")
+        
+        # Buraya ileride Replicate API kodu gelecek
+        # human_file -> Müşteri fotosu
+        # urun_linki -> Kıyafet linki
+        
     else:
-        st.error("Lütfen önce yukarıya geçerli bir resim linki yapıştırın.")
+        if human_file is None:
+            st.error("Lütfen önce kendi fotoğrafınızı yükleyin (1. Adım).")
+        elif garm_img is None:
+            st.error("Lütfen bir ürün linki yapıştırın (2. Adım).")
