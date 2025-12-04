@@ -4,25 +4,34 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-# --- 1. AYARLAR ---
-# DİKKAT: Sayfa başlığı HTML <title> etiketiyle DEĞİL, aşağıdaki fonksiyonla ayarlanır.
+# --- 1. AYARLAR (EN BAŞTA OLMALI) ---
 st.set_page_config(page_title="POG'S Sanal Kabin (Ücretsiz)", page_icon="🍌", layout="wide")
 
-# --- 2. MOTOR KONTROLÜ ---
-# Burada sistemin çalışması için gereken motoru kontrol ediyoruz.
+# --- 2. MOTOR KONTROLÜ VE KURTARMA ---
 try:
     from gradio_client import Client, handle_file
 except ImportError:
-    st.error("🚨 HATA: Motor (kütüphane) eksik!")
-    st.warning("""
-    Bu hatayı görüyorsan, 'requirements.txt' dosyan eksik veya okunmadı demektir.
+    st.error("🚨 HATA: Motor parçaları eksik!")
     
-    ÇÖZÜM:
-    1. Projende 'requirements.txt' adında bir dosya olduğundan emin ol.
-    2. İçinde 'gradio_client' yazdığından emin ol.
-    3. Sağ alttaki 'Manage App' menüsünden 'Reboot App' yap.
+    # Kullanıcıya ne yapması gerektiğini kutu içinde gösterelim
+    st.info("🛠️ TAMİR ETMEK İÇİN ŞUNU YAP:")
+    st.code("requirements.txt", language="text")
+    st.markdown("""
+    1. Soldaki dosya listesinde **'requirements.txt'** diye bir dosya var mı?
+       - **YOKSA:** Hemen '+' butonuna basıp bu isimde bir dosya oluştur.
+       - **VARSA:** İçini aç ve kontrol et.
+    
+    2. O dosyanın içine şu 4 kelimeyi alt alta yazıp kaydet:
     """)
-    st.stop()
+    st.code("""streamlit
+requests
+Pillow
+gradio_client""", language="text")
+    
+    st.markdown("""
+    3. Son olarak sağ alttan **'Manage App' -> 'Reboot App'** yap.
+    """)
+    st.stop() # Kodun geri kalanını çalıştırma
 
 # --- Logo Kısmı ---
 try:
@@ -31,6 +40,7 @@ except:
     st.header("POG'S")
 
 st.title("Sanal Kabin (Nano Modu 🍌)")
+st.success("Sistem şu an sorunsuz çalışıyor! ✅")
 st.write("Bu sürüm tamamen ücretsizdir! HuggingFace altyapısını kullanır.")
 
 # --- 3. SAYFA DÜZENİ ---
@@ -50,7 +60,7 @@ with col1:
         with open("temp_human.jpg", "wb") as f:
             f.write(human_file.getbuffer())
         human_img_path = "temp_human.jpg"
-        st.success("✅ Fotoğraf hazır.")
+        st.info("✅ Fotoğraf alındı.")
 
 # --- SAĞ SÜTUN: ÜRÜN LİNKİ ---
 with col2:
@@ -70,7 +80,7 @@ with col2:
             garm_img_path = "temp_garm.jpg"
             
             st.image(garm_img_display, caption="Seçilen Ürün", width=300)
-            st.success("✅ Ürün hazır.")
+            st.info("✅ Ürün alındı.")
 
         except Exception as e:
             st.error("Resim yüklenemedi. Linkin doğrudan bir resim dosyası olduğundan emin ol.")
@@ -84,7 +94,7 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
         st.error("❌ Lütfen önce fotoğrafını yükle ve geçerli bir ürün linki gir.")
         st.stop()
 
-    st.info("🍌 Nano Banana Motoru çalışıyor... (Ücretsiz sunucu olduğu için 40-60 saniye sürebilir, lütfen bekle...)")
+    st.warning("🍌 Nano Banana Motoru çalışıyor... (Ücretsiz sunucu olduğu için 40-60 saniye sürebilir, lütfen bekle...)")
     
     try:
         # ÜCRETSİZ API BAĞLANTISI
@@ -110,4 +120,4 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
 
     except Exception as e:
         st.error(f"Bir hata oluştu: {e}")
-        st.warning("Sunucu yoğun olabilir, birazdan tekrar dene.")
+        st.info("Sunucu yoğun olabilir, birazdan tekrar dene.")
