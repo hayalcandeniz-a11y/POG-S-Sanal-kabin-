@@ -3,6 +3,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 import os
+import re  # Linklerin içinden resim bulmak için dedektif kütüphanesi
 
 # --- Sayfa Ayarları ---
 st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="👕")
@@ -34,24 +35,59 @@ if human_file is not None:
     st.image(human_file, caption="Senin Fotoğrafın", width=200)
     st.success("Fotoğrafın hazır!")
 
-# --- 2. ADIM: Ürün Linki Alma ---
+# --- 2. ADIM: Ürün Linki Alma (AKILLI MOD) ---
 st.markdown("---")
 st.subheader("2. Adım: Denenecek Ürün")
-urun_linki = st.text_input("Ürün Resminin Linkini Buraya Yapıştır")
+st.info("İpucu: Doğrudan ürün sayfasının linkini (Örn: trendyol.com/urun...) veya resim linkini yapıştırabilirsin.")
+girilen_link = st.text_input("Ürün Sayfası veya Resim Linki")
 
-garm_img = None # Başlangıçta boş olsun
+garm_img = None         # Ekranda göstereceğimiz resim
+apiye_gidecek_link = "" # Yapay zekaya göndereceğimiz temiz resim linki
 
-if urun_linki:
+if girilen_link:
     try:
-        # Linkteki resmi indirip hafızaya alıyoruz
-        response = requests.get(urun_linki)
-        garm_img = Image.open(BytesIO(response.content))
+        # Linke istek atıyoruz
+        headers = {'User-Agent': 'Mozilla/5.0'} # Kendimizi tarayıcı gibi tanıtıyoruz
+        response = requests.get(girilen_link, headers=headers)
         
-        # Ekranda kullanıcıya doğru resmi seçtiğini gösterelim
-        st.image(garm_img, caption="Seçilen Ürün", width=300)
-        st.success("Ürün fotoğrafı başarıyla alındı!")
-    except:
-        st.error("Bu linkte bir resim bulamadım. Linkin .jpg veya .png ile bittiğinden emin ol.")
+        # 1. Durum: Link zaten bir resim dosyasıysa (jpg, png vb.)
+        content_type = response.headers.get('Content-Type', '')
+        if 'image' in content_type:
+            garm_img = Image.open(BytesIO(response.content))
+            apiye_gidecek_link = girilen_link
+            st.success("Doğrudan resim bağlantısı algılandı.")
+
+        # 2. Durum: Link bir web sitesi sayfasıysa (html)
+        else:
+            st.info("Web sayfası algılandı, içindeki ürün görseli aranıyor... 🔍")
+            html_icerigi = response.text
+            
+            # Sayfa kodları içinde 'og:image' etiketini arıyoruz (Genelde ana ürün fotosu budur)
+            # Regex ile <meta property="og:image" content="..."> yapısını yakalıyoruz
+            bulunan = re.search(r'<meta property="og:image" content="(.*?)"', html_icerigi)
+            
+            if bulunan:
+                bulunan_resim_linki = bulunan.group(1)
+                
+                # Bazen linkler // ile başlar, başına https: ekleyelim
+                if bulunan_resim_linki.startswith("//"):
+                    bulunan_resim_linki = "https:" + bulunan_resim_linki
+                
+                # Bulduğumuz resmi indirelim
+                resim_response = requests.get(bulunan_resim_linki, headers=headers)
+                garm_img = Image.open(BytesIO(resim_response.content))
+                apiye_gidecek_link = bulunan_resim_linki # AI'ya bu linki göndereceğiz
+                
+                st.success(f"Sayfadaki ana görsel bulundu!")
+            else:
+                st.warning("Sayfada uygun bir ürün görseli (og:image) bulunamadı. Lütfen doğrudan resim linki deneyin.")
+
+        # Resmi Ekrana Bas
+        if garm_img:
+            st.image(garm_img, caption="Algılanan Ürün", width=300)
+
+    except Exception as e:
+        st.error(f"Link işlenirken bir hata oluştu: {e}")
 
 # --- 3. ADIM: Deneme Butonu ---
 st.markdown("---")
@@ -63,20 +99,19 @@ if st.button("SANAL DENEMEYİ BAŞLAT", type="primary"):
         st.stop()
         
     # 2. Kontrol: Dosyalar tamam mı?
-    if human_file is not None and garm_img is not None and urun_linki:
+    if human_file is not None and garm_img is not None and apiye_gidecek_link:
         st.info("⏳ Yapay zeka motoru çalışıyor... Bu işlem 15-30 saniye sürebilir. Lütfen bekleyin.")
         
         try:
-            # Replicate kütüphanesini burada çağırıyoruz
             import replicate
             
             # --- MOTOR BURADA ÇALIŞIYOR ---
             output = replicate.run(
                 "cuuupid/idm-vton:c871bb9b046607400f7e0472a2441966250652885738466665097774130204c8",
                 input={
-                    "human_img": human_file, # Senin yüklediğin dosya
-                    "garm_img": urun_linki,  # Senin yapıştırdığın link
-                    "category": "upper_body", # Varsayılan olarak üst giyim
+                    "human_img": human_file,      # Senin yüklediğin dosya
+                    "garm_img": apiye_gidecek_link, # Sayfadan ayıkladığımız TEMİZ resim linki
+                    "category": "upper_body",
                     "garment_des": "clothing item"
                 }
             )
@@ -97,4 +132,4 @@ if st.button("SANAL DENEMEYİ BAŞLAT", type="primary"):
         if human_file is None:
             st.error("Lütfen önce kendi fotoğrafınızı yükleyin (1. Adım).")
         elif garm_img is None:
-            st.error("Lütfen bir ürün linki yapıştırın (2. Adım).")
+            st.error("Lütfen geçerli bir ürün sayfası linki yapıştırın (2. Adım).")
