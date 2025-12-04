@@ -5,15 +5,32 @@ from PIL import Image
 from io import BytesIO
 
 # --- 1. AYARLAR ---
-# Sayfa başlığı HTML ile değil, bu Python koduyla ayarlanır:
+# Bu komut her zaman en başta olmalıdır.
 st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="🍌", layout="wide")
 
 # --- 2. MOTOR KONTROLÜ ---
+# Burada sistemin çalışması için gereken kütüphaneleri kontrol ediyoruz.
 try:
     from gradio_client import Client, handle_file
 except ImportError:
     st.error("🚨 HATA: Motor (gradio_client) bulunamadı!")
-    st.warning("Lütfen 'requirements.txt' dosyasını oluşturup içine 'gradio_client' yazdığından emin ol ve uygulamayı REBOOT et.")
+    
+    st.info("🛠️ ÇÖZÜM: 'requirements.txt' Dosyası Eksik")
+    st.markdown("""
+    Bu hatayı çözmek için:
+    1. Sol menüden **'New File'** butonuna bas.
+    2. Dosya adını `requirements.txt` yap.
+    3. İçine şu 4 satırı yapıştır:
+    """)
+    
+    st.code("""streamlit
+requests
+Pillow
+gradio_client""", language="text")
+    
+    st.markdown("""
+    4. Dosyayı kaydet ve sağ alttan **'Reboot App'** yap.
+    """)
     st.stop()
 
 # --- Logo Kısmı ---
@@ -23,7 +40,7 @@ except:
     st.header("POG'S")
 
 st.title("Sanal Kabin (Nano Modu 🍌)")
-st.success("✅ Sistem başarıyla açıldı! Hata yok.")
+st.success("✅ Sistem başarıyla açıldı! Hazır.")
 
 # --- 3. SAYFA DÜZENİ ---
 col1, col2 = st.columns(2)
@@ -73,7 +90,9 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
     st.warning("🍌 Nano Banana Motoru çalışıyor... (40-60 saniye sürebilir, lütfen bekle...)")
     
     try:
+        # Hugging Face üzerindeki ücretsiz motoru kullanıyoruz
         client = Client("yisol/IDM-VTON")
+        
         result = client.predict(
             dict={"background": handle_file(human_img_path), "layers": [], "composite": None},
             garm_img=handle_file(garm_img_path),
@@ -92,3 +111,4 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
 
     except Exception as e:
         st.error(f"Bir hata oluştu: {e}")
+        st.info("Sunucu yoğun olabilir, birazdan tekrar dene.")
