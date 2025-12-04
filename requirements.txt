@@ -5,6 +5,7 @@ from PIL import Image
 from io import BytesIO
 
 # --- 1. AYARLAR ---
+# DİKKAT: Sayfa başlığı HTML <title> etiketiyle DEĞİL, aşağıdaki fonksiyonla ayarlanır.
 st.set_page_config(page_title="POG'S Sanal Kabin (Ücretsiz)", page_icon="🍌", layout="wide")
 
 # --- 2. MOTOR KONTROLÜ ---
