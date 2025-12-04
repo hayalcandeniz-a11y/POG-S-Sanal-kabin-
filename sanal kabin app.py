@@ -5,7 +5,6 @@ from PIL import Image
 from io import BytesIO
 
 # --- 1. AYARLAR ---
-# DİKKAT: Sayfa başlığı bu komutla ayarlanır. Asla <title> yazma.
 st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="🍌", layout="wide")
 
 # --- Logo Kısmı ---
@@ -17,11 +16,10 @@ except:
 st.title("Sanal Kabin (Nano Modu 🍌)")
 
 # --- 2. DOSYA KONTROLÜ ---
-# requirements.txt var mı yok mu kontrol ediyoruz
 if not os.path.exists("requirements.txt"):
-    st.error("🚨 HATA: 'requirements.txt' dosyası bulunamadı!")
-    st.info("Lütfen sol menüden yeni bir dosya oluşturup adını 'requirements.txt' yapın ve içine gerekli kütüphaneleri yazın.")
-    st.stop() # Dosya yoksa dur.
+    st.error("🚨 EKSİK DOSYA: 'requirements.txt' bulunamadı!")
+    st.info("Lütfen sol menüden 'requirements.txt' adında bir dosya oluştur ve içine gerekli kütüphaneleri yaz.")
+    st.stop()
 
 # --- 3. SAYFA DÜZENİ ---
 col1, col2 = st.columns(2)
@@ -36,11 +34,10 @@ with col1:
     
     if human_file:
         st.image(human_file, caption="Müşteri Fotoğrafı", width=300)
-        # Dosyayı geçici olarak kaydet
         with open("temp_human.jpg", "wb") as f:
             f.write(human_file.getbuffer())
         human_img_path = "temp_human.jpg"
-        st.success("✅ Fotoğraf yüklendi.")
+        st.success("✅ Fotoğraf hazır.")
 
 # --- SAĞ SÜTUN: ÜRÜN LİNKİ ---
 with col2:
@@ -50,26 +47,20 @@ with col2:
 
     if girilen_link:
         try:
-            # Linkten resmi indir
             headers = {'User-Agent': 'Mozilla/5.0'}
             response = requests.get(girilen_link, headers=headers)
             garm_img_display = Image.open(BytesIO(response.content))
-            
-            # Dosyayı geçici olarak kaydet
             garm_img_display.save("temp_garm.jpg")
             garm_img_path = "temp_garm.jpg"
-            
             st.image(garm_img_display, caption="Seçilen Ürün", width=300)
-            st.success("✅ Ürün seçildi.")
-
+            st.success("✅ Ürün hazır.")
         except Exception as e:
-            st.error("Resim yüklenemedi. Linkin doğrudan bir resim dosyası olduğundan emin ol.")
+            st.error("Resim yüklenemedi. Linkin doğru olduğundan emin ol.")
 
 # --- 4. BAŞLATMA BUTONU ---
 st.markdown("---")
 if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=True):
     
-    # Dosya Kontrolü
     if not human_img_path or not garm_img_path:
         st.error("❌ Lütfen önce fotoğrafını yükle ve geçerli bir ürün linki gir.")
         st.stop()
@@ -78,17 +69,14 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
     try:
         from gradio_client import Client, handle_file
     except ImportError:
-        st.error("🚨 HATA: Motor parçaları eksik!")
-        st.warning("Motorun çalışması için 'requirements.txt' dosyasına 'gradio_client' yazıp kaydetmen ve Reboot yapman gerekiyor.")
+        st.error("🚨 KRİTİK HATA: Motor (gradio_client) yüklenmemiş!")
+        st.warning("ÇÖZÜM: requirements.txt dosyasını oluşturduktan sonra sağ alttan 'Manage App' -> 'Reboot App' yapman ŞARTTIR.")
         st.stop()
 
-    st.info("🍌 Nano Banana Motoru çalışıyor... (Ücretsiz sunucu olduğu için 40-60 saniye sürebilir, lütfen bekle...)")
+    st.info("🍌 Nano Banana Motoru çalışıyor... (40-60 saniye sürebilir, lütfen bekle...)")
     
     try:
-        # ÜCRETSİZ API BAĞLANTISI
         client = Client("yisol/IDM-VTON")
-        
-        # İşlemi Başlat
         result = client.predict(
             dict={"background": handle_file(human_img_path), "layers": [], "composite": None},
             garm_img=handle_file(garm_img_path),
@@ -100,12 +88,10 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
             api_name="/tryon"
         )
         
-        # Sonuç gösterimi
         sonuc_resim_yolu = result[0]
         st.balloons()
         st.success("🎉 İŞTE SONUÇ!")
         st.image(sonuc_resim_yolu, caption="Sanal Deneme Sonucu", use_column_width=True)
 
     except Exception as e:
-        st.error(f"Bir hata oluştu: {e}")
-        st.warning("Sunucu yoğun olabilir, birazdan tekrar dene.")
+        st.error(f"Sunucu Hatası: {e}")
