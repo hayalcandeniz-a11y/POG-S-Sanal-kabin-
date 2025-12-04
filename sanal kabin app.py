@@ -36,31 +36,13 @@ if urun_linki:
         st.image(garm_img, caption="Seçilen Ürün", width=300)
     except:
         st.error("Bu linkte bir resim bulamadım. Linkin .jpg veya .png ile bittiğinden emin ol.")
-if uploaded_file is not None:
-    st.image(uploaded_file, caption="Yüklediğiniz Fotoğraf", width=300)
-    st.success("Fotoğraf yüklendi! Şimdi aşağıdan bir ürün seçin.")
+if garm_img is not None:
+st.image(garm_img, ...)    st.success("Fotoğraf yüklendi! Şimdi aşağıdan bir ürün seçin.")
 
 # 3. Ürün Seçimi (3 Sütun Halinde)
 st.subheader("Denemek İstediğin Ürünü Seç")
 col1, col2, col3 = st.columns(3)
 
-# Not: tisort1.png, tisort2.png isimli dosyaların GitHub'da yüklü olması lazım.
-# Eğer yoksa hata vermesin diye basit butonlar koydum.
-
-with col1:
-    st.info("Tişört Modeli 1")
-    if st.button("Seç", key="t1"):
-        st.session_state['secilen'] = "Model 1"
-
-with col2:
-    st.info("Tişört Modeli 2")
-    if st.button("Seç", key="t2"):
-        st.session_state['secilen'] = "Model 2"
-
-with col3:
-    st.info("Sweatshirt")
-    if st.button("Seç", key="t3"):
-        st.session_state['secilen'] = "Model 3"
 
 # Seçim Bilgisi
 if 'secilen' in st.session_state:
