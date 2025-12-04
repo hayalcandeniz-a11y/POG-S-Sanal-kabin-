@@ -15,8 +15,27 @@ st.title("Sanal Kabin'e Hoşgeldiniz")
 st.write("Kendi fotoğrafını yükle ve ürünlerimizi üzerinde dene!")
 
 # 2. Fotoğraf Yükleme Alanı
-uploaded_file = st.file_uploader("Boydan fotoğrafınızı yükleyin:", type=["jpg", "png", "jpeg"])
+# YENİ KOD (Bunu yapıştır)
+import requests # Eğer sayfanın en tepesinde bu yoksa ekle
+from PIL import Image
+from io import BytesIO
 
+# 1. Kullanıcıdan link isteyen kutucuk
+urun_linki = st.text_input("Ürün Resminin Linkini Buraya Yapıştır")
+
+garm_img = None # Başlangıçta boş olsun
+
+# 2. Eğer kutuya bir şey yazıldıysa
+if urun_linki:
+    try:
+        # Linkteki resmi indirip hafızaya alıyoruz
+        response = requests.get(urun_linki)
+        garm_img = Image.open(BytesIO(response.content))
+        
+        # Ekranda kullanıcıya doğru resmi seçtiğini gösterelim
+        st.image(garm_img, caption="Seçilen Ürün", width=300)
+    except:
+        st.error("Bu linkte bir resim bulamadım. Linkin .jpg veya .png ile bittiğinden emin ol.")
 if uploaded_file is not None:
     st.image(uploaded_file, caption="Yüklediğiniz Fotoğraf", width=300)
     st.success("Fotoğraf yüklendi! Şimdi aşağıdan bir ürün seçin.")
