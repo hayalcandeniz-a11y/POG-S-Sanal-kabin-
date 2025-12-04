@@ -4,99 +4,76 @@ import requests
 from PIL import Image
 from io import BytesIO
 
+# --- 1. AYARLAR ---
+st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="🍌", layout="wide")
 
-if not os.path.exists("requirements.txt"):
-    st.error("🚨 HATA 1: 'requirements.txt' dosyası bulunamadı!")
-    st.info("ÇÖZÜM: Sol menüden 'New File' diyerek bu isimde bir dosya oluşturmalısın.")
-    st.stop()
+st.title("Sanal Kabin (Final Sürüm 🍌)")
+st.markdown("Eğer bu yazı görünüyorsa uygulama başlamış demektir.")
 
-# ADIM B: requirements.txt içeriği kontrolü
-with open("requirements.txt", "r") as f:
-    dosya_icerigi = f.read()
-    if "gradio_client" not in dosya_icerigi:
-        st.error("🚨 HATA 2: 'requirements.txt' dosyasında 'gradio_client' eksik!")
-        st.warning(f"Mevcut içerik:\n{dosya_icerigi}")
-        st.info("ÇÖZÜM: Dosyaya 'gradio_client' satırını eklemelisin.")
-        st.stop()
-
+# --- 2. KÜTÜPHANE KONTROLÜ (Otomatik Kontrol) ---
 try:
     from gradio_client import Client, handle_file
-    st.success("✅ Motor başarıyla yüklendi! Sistem hazır.")
+    st.success("✅ Motor (Gradio Client) başarıyla yüklendi!")
 except ImportError:
-    st.error("🚨 HATA 3: Kütüphaneler yüklü değil veya motor başlatılamadı.")
-    st.info("ÇÖZÜM: Sağ alt köşedeki 'Manage App' menüsünden 'Reboot App' butonuna basarak uygulamayı yeniden başlat.")
+    st.error("🚨 HATA: 'gradio_client' kütüphanesi bulunamadı!")
+    st.warning("Lütfen sol menüde 'requirements.txt' adında bir dosya oluşturduğundan ve içine 'gradio_client' yazdığından emin ol.")
     st.stop()
 
+# --- 3. SAYFA DÜZENİ ---
 col1, col2 = st.columns(2)
-
-garm_img_path = None
 human_img_path = None
+garm_img_path = None
 
 with col1:
-    st.subheader("1. Adım: Senin Fotoğrafın")
-    human_file = st.file_uploader("Boydan bir fotoğrafını yükle", type=['png', 'jpg', 'jpeg'])
-    
+    st.subheader("1. Senin Fotoğrafın")
+    human_file = st.file_uploader("Fotoğrafını Yükle", type=['png', 'jpg', 'jpeg'])
     if human_file:
-        st.image(human_file, caption="Müşteri Fotoğrafı", width=300)
-        # Dosyayı geçici olarak kaydet
+        st.image(human_file, width=250)
         with open("temp_human.jpg", "wb") as f:
             f.write(human_file.getbuffer())
         human_img_path = "temp_human.jpg"
-        st.info("✅ Fotoğraf alındı.")
 
 with col2:
-    st.subheader("2. Adım: Ürün Linki")
-    st.info("💡 İpucu: Ürün resminin linkini yapıştır (.jpg veya .png ile biten).")
-    girilen_link = st.text_input("Ürün Resim Linki")
-
-    if girilen_link:
+    st.subheader("2. Kıyafet Linki")
+    link = st.text_input("Ürün görsel linkini yapıştır")
+    if link:
         try:
-            headers = {'User-Agent': 'Mozilla/5.0'}
-            response = requests.get(girilen_link, headers=headers)
-            if response.status_code == 200:
-                garm_img_display = Image.open(BytesIO(response.content))
-                garm_img_display.save("temp_garm.jpg")
+            resp = requests.get(link, headers={'User-Agent': 'Mozilla/5.0'})
+            if resp.status_code == 200:
+                img = Image.open(BytesIO(resp.content))
+                st.image(img, width=250)
+                img.save("temp_garm.jpg")
                 garm_img_path = "temp_garm.jpg"
-                st.image(garm_img_display, caption="Seçilen Ürün", width=300)
-                st.info("✅ Ürün alındı.")
             else:
-                st.error("Resim indirilemedi. Bağlantıyı kontrol et.")
-        except Exception as e:
-            st.error(f"Resim yüklenirken hata oluştu: {e}")
+                st.error("Resim indirilemedi.")
+        except:
+            st.error("Link hatası.")
 
+# --- 4. ÇALIŞTIRMA ---
 st.markdown("---")
-if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=True):
-    
+if st.button("DENEMEYİ BAŞLAT", type="primary"):
     if not human_img_path or not garm_img_path:
-        st.error("❌ Lütfen önce hem kendi fotoğrafını yükle hem de geçerli bir ürün linki gir.")
-        st.stop()
-
-    st.warning("🍌 Nano Banana Motoru çalışıyor... (40-60 saniye sürebilir, lütfen bekle...)")
-    
-    try:
-        # Hugging Face üzerindeki ücretsiz motoru kullanıyoruz
-        client = Client("yisol/IDM-VTON")
-        
-        # API çağrısı
-        # Not: 'dict' parametresi isimlendirilmiş argüman olarak gönderiliyor.
-        # Python keyword ile çakışsa da gradio_client bunu bekliyor olabilir.
-        result = client.predict(
-            dict={"background": handle_file(human_img_path), "layers": [], "composite": None},
-            garm_img=handle_file(garm_img_path),
-            garment_des="clothing",
-            is_checked=True,
-            is_checked_crop=False,
-            denoise_steps=30,
-            seed=42,
-            api_name="/tryon"
-        )
-        
-        sonuc_resim_yolu = result[0]
-        
-        st.balloons()
-        st.success("🎉 İŞTE SONUÇ!")
-        st.image(sonuc_resim_yolu, caption="Sanal Deneme Sonucu", use_column_width=True)
-
-    except Exception as e:
-        st.error(f"Bir hata oluştu: {e}")
-        st.info("Sunucu şu an çok yoğun olabilir veya API yanıt vermiyor olabilir. Lütfen 1-2 dakika sonra tekrar dene.")
+        st.error("Lütfen önce iki resmi de yükle!")
+    else:
+        st.info("⏳ İşlem başladı... Lütfen 40-60 saniye bekleyin, sayfayı kapatmayın.")
+        try:
+            # HuggingFace API Bağlantısı
+            client = Client("yisol/IDM-VTON")
+            
+            result = client.predict(
+                dict={"background": handle_file(human_img_path), "layers": [], "composite": None},
+                garm_img=handle_file(garm_img_path),
+                garment_des="clothing",
+                is_checked=True,
+                is_checked_crop=False,
+                denoise_steps=30,
+                seed=42,
+                api_name="/tryon"
+            )
+            
+            st.success("İşlem Tamamlandı!")
+            st.image(result[0], caption="Sonuç", use_column_width=True)
+            
+        except Exception as e:
+            st.error(f"Bir hata oluştu: {str(e)}")
+            st.info("Sunucu yoğun olabilir. Lütfen 1 dakika sonra tekrar dene.")
