@@ -16,7 +16,7 @@ except:
     st.header("POG'S")
 
 st.title("Sanal Kabin (Nano Modu 🍌)")
-st.write("Bu sürüm tamamen ücretsizdir! Google Nano/HuggingFace altyapısını kullanır.")
+st.write("Bu sürüm tamamen ücretsizdir! Nano Banana (HuggingFace) altyapısını kullanır.")
 
 # --- İKİ SÜTUNLU YAPI ---
 col1, col2 = st.columns(2)
@@ -69,10 +69,10 @@ if st.button("ÜCRETSİZ DENE (BAŞLAT)", type="primary", use_container_width=Tr
         st.error("❌ Lütfen önce fotoğrafını yükle ve ürün linkini gir.")
         st.stop()
 
-    st.info("🍌 Nano Motor çalışıyor... (Ücretsiz sunucu olduğu için 30-60 saniye sürebilir, lütfen bekle...)")
+    st.info("🍌 Nano Banana Motoru çalışıyor... (Ücretsiz sunucu olduğu için 30-60 saniye sürebilir, lütfen bekle...)")
     
     try:
-        # ÜCRETSİZ API BAĞLANTISI (Hugging Face Spaces)
+        # ÜCRETSİZ API BAĞLANTISI (Hugging Face Spaces - yisol/IDM-VTON)
         client = Client("yisol/IDM-VTON")
         
         # İşlemi Başlat
