@@ -9,7 +9,6 @@ from io import BytesIO
 st.set_page_config(page_title="POG'S Sanal Kabin", page_icon="🍌", layout="wide")
 
 # --- 2. DOKTOR MODU (KONTROLLER) ---
-st.title("Sanal Kabin (Nano Modu 🍌)")
 
 # ADIM A: requirements.txt kontrolü
 if not os.path.exists("requirements.txt"):
